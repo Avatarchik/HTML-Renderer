@@ -19,6 +19,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using TheArtOfDev.HtmlRenderer.Core;
 using TheArtOfDev.HtmlRenderer.WinForms;
 
 namespace TheArtOfDev.HtmlRenderer.Demo.WinForms
@@ -81,7 +82,7 @@ namespace TheArtOfDev.HtmlRenderer.Demo.WinForms
                     {
                         foreach (var html in _perfTestSamples)
                         {
-                            htmlContainer.SetHtml(html);
+                            htmlContainer.SetResourceServerAsync(new WinFormsDemoResourceServer(html));
 
                             if (layout)
                                 htmlContainer.PerformLayout(g);

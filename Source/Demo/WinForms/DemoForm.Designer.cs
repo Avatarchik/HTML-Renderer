@@ -132,7 +132,7 @@ namespace TheArtOfDev.HtmlRenderer.Demo.WinForms
             this._generatePdfTSB.Size = new System.Drawing.Size(82, 22);
             this._generatePdfTSB.Text = "Generate PDF";
             this._generatePdfTSB.ToolTipText = "Generate PDF from the current HTML using PdfSharp library.";
-            this._generatePdfTSB.Click += new System.EventHandler(this.OnGeneratePdf_Click);
+            this._generatePdfTSB.Click += new System.EventHandler((o, e) => this.OnGeneratePdf_Click(o, e));
             // 
             // _runPerformanceTSB
             // 

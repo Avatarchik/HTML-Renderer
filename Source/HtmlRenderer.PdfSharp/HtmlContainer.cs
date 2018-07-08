@@ -13,6 +13,7 @@
 using PdfSharp.Drawing;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using TheArtOfDev.HtmlRenderer.Adapters.Entities;
 using TheArtOfDev.HtmlRenderer.Core;
 using TheArtOfDev.HtmlRenderer.Core.Entities;
@@ -44,8 +45,8 @@ namespace TheArtOfDev.HtmlRenderer.PdfSharp
         public HtmlContainer()
         {
             _htmlContainerInt = new HtmlContainerInt(PdfSharpAdapter.Instance);
-            _htmlContainerInt.AvoidAsyncImagesLoading = true;
-            _htmlContainerInt.AvoidImagesLateLoading = true;
+            //_htmlContainerInt.AvoidAsyncImagesLoading = true;
+            //_htmlContainerInt.AvoidImagesLateLoading = true;
         }
 
         /// <summary>
@@ -79,16 +80,6 @@ namespace TheArtOfDev.HtmlRenderer.PdfSharp
         {
             add { _htmlContainerInt.StylesheetLoad += value; }
             remove { _htmlContainerInt.StylesheetLoad -= value; }
-        }
-
-        /// <summary>
-        /// Raised when an image is about to be loaded by file path or URI.<br/>
-        /// This event allows to provide the image manually, if not handled the image will be loaded from file or download from URI.
-        /// </summary>
-        public event EventHandler<HtmlImageLoadEventArgs> ImageLoad
-        {
-            add { _htmlContainerInt.ImageLoad += value; }
-            remove { _htmlContainerInt.ImageLoad -= value; }
         }
 
         /// <summary>
@@ -256,9 +247,9 @@ namespace TheArtOfDev.HtmlRenderer.PdfSharp
         /// </summary>
         /// <param name="htmlSource">the html to init with, init empty if not given</param>
         /// <param name="baseCssData">optional: the stylesheet to init with, init default if not given</param>
-        public void SetHtml(string htmlSource, CssData baseCssData = null)
+        public Task SetResourceServerAsync(IResourceServer resourceServer)
         {
-            _htmlContainerInt.SetHtml(htmlSource, baseCssData);
+            return _htmlContainerInt.SetResoureServerAsync(resourceServer);
         }
 
         /// <summary>

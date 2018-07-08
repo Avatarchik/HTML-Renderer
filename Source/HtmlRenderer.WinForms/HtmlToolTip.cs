@@ -95,10 +95,8 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
             _htmlContainer.IsSelectionEnabled = false;
             _htmlContainer.IsContextMenuEnabled = false;
             _htmlContainer.AvoidGeometryAntialias = true;
-            _htmlContainer.AvoidImagesLateLoading = true;
             _htmlContainer.RenderError += OnRenderError;
             _htmlContainer.StylesheetLoad += OnStylesheetLoad;
-            _htmlContainer.ImageLoad += OnImageLoad;
 
             Popup += OnToolTipPopup;
             Draw += OnToolTipDraw;
@@ -112,6 +110,8 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
             _htmlContainer.LinkClicked += OnLinkClicked;
 #endif
         }
+
+        public IResourceServer ResourceServer;
 
 #if !MONO
         /// <summary>
@@ -132,12 +132,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         /// If no alternative data is provided the original source will be used.<br/>
         /// </summary>
         public event EventHandler<HtmlStylesheetLoadEventArgs> StylesheetLoad;
-
-        /// <summary>
-        /// Raised when an image is about to be loaded by file path or URI.<br/>
-        /// This event allows to provide the image manually, if not handled the image will be loaded from file or download from URI.
-        /// </summary>
-        public event EventHandler<HtmlImageLoadEventArgs> ImageLoad;
 
         /// <summary>
         /// Use GDI+ text rendering to measure/draw text.<br/>
@@ -246,8 +240,9 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         {
             //Create fragment container
             var cssClass = string.IsNullOrEmpty(_tooltipCssClass) ? null : string.Format(" class=\"{0}\"", _tooltipCssClass);
-            var toolipHtml = string.Format("<div{0}>{1}</div>", cssClass, GetToolTip(e.AssociatedControl));
-            _htmlContainer.SetHtml(toolipHtml, _baseCssData);
+            ResourceServer.SetHtml(string.Format("<div{0}>{1}</div>", cssClass, GetToolTip(e.AssociatedControl)));
+            
+            _htmlContainer.SetResourceServerAsync(ResourceServer);
             _htmlContainer.MaxSize = MaximumSize;
 
             //Measure size of the container
@@ -351,16 +346,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
                 handler(this, e);
         }
 
-        /// <summary>
-        /// Propagate the image load event from root container.
-        /// </summary>
-        protected virtual void OnImageLoad(HtmlImageLoadEventArgs e)
-        {
-            var handler = ImageLoad;
-            if (handler != null)
-                handler(this, e);
-        }
-
 #if !MONO
         /// <summary>
         /// Raised on link handling timer tick, used for:
@@ -422,7 +407,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
             {
                 _htmlContainer.RenderError -= OnRenderError;
                 _htmlContainer.StylesheetLoad -= OnStylesheetLoad;
-                _htmlContainer.ImageLoad -= OnImageLoad;
                 _htmlContainer.Dispose();
                 _htmlContainer = null;
             }
@@ -459,11 +443,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         private void OnStylesheetLoad(object sender, HtmlStylesheetLoadEventArgs e)
         {
             OnStylesheetLoad(e);
-        }
-
-        private void OnImageLoad(object sender, HtmlImageLoadEventArgs e)
-        {
-            OnImageLoad(e);
         }
 
 #if !MONO

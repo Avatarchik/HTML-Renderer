@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using TheArtOfDev.HtmlRenderer.Adapters.Entities;
 using TheArtOfDev.HtmlRenderer.Core;
@@ -123,16 +124,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         }
 
         /// <summary>
-        /// Raised when an image is about to be loaded by file path or URI.<br/>
-        /// This event allows to provide the image manually, if not handled the image will be loaded from file or download from URI.
-        /// </summary>
-        public event EventHandler<HtmlImageLoadEventArgs> ImageLoad
-        {
-            add { _htmlContainerInt.ImageLoad += value; }
-            remove { _htmlContainerInt.ImageLoad -= value; }
-        }
-
-        /// <summary>
         /// The internal core html container
         /// </summary>
         internal HtmlContainerInt HtmlContainerInt
@@ -181,41 +172,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         {
             get { return _htmlContainerInt.AvoidGeometryAntialias; }
             set { _htmlContainerInt.AvoidGeometryAntialias = value; }
-        }
-
-        /// <summary>
-        /// Gets or sets a value indicating if image asynchronous loading should be avoided (default - false).<br/>
-        /// True - images are loaded synchronously during html parsing.<br/>
-        /// False - images are loaded asynchronously to html parsing when downloaded from URL or loaded from disk.<br/>
-        /// </summary>
-        /// <remarks>
-        /// Asynchronously image loading allows to unblock html rendering while image is downloaded or loaded from disk using IO 
-        /// ports to achieve better performance.<br/>
-        /// Asynchronously image loading should be avoided when the full html content must be available during render, like render to image.
-        /// </remarks>
-        public bool AvoidAsyncImagesLoading
-        {
-            get { return _htmlContainerInt.AvoidAsyncImagesLoading; }
-            set { _htmlContainerInt.AvoidAsyncImagesLoading = value; }
-        }
-
-        /// <summary>
-        /// Gets or sets a value indicating if image loading only when visible should be avoided (default - false).<br/>
-        /// True - images are loaded as soon as the html is parsed.<br/>
-        /// False - images that are not visible because of scroll location are not loaded until they are scrolled to.
-        /// </summary>
-        /// <remarks>
-        /// Images late loading improve performance if the page contains image outside the visible scroll area, especially if there is large 
-        /// amount of images, as all image loading is delayed (downloading and loading into memory).<br/>
-        /// Late image loading may effect the layout and actual size as image without set size will not have actual size until they are loaded
-        /// resulting in layout change during user scroll.<br/>
-        /// Early image loading may also effect the layout if image without known size above the current scroll location are loaded as they
-        /// will push the html elements down.
-        /// </remarks>
-        public bool AvoidImagesLateLoading
-        {
-            get { return _htmlContainerInt.AvoidImagesLateLoading; }
-            set { _htmlContainerInt.AvoidImagesLateLoading = value; }
         }
 
         /// <summary>
@@ -312,9 +268,9 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         /// </summary>
         /// <param name="htmlSource">the html to init with, init empty if not given</param>
         /// <param name="baseCssData">optional: the stylesheet to init with, init default if not given</param>
-        public void SetHtml(string htmlSource, CssData baseCssData = null)
+        public Task SetResourceServerAsync(IResourceServer resourceServer)
         {
-            _htmlContainerInt.SetHtml(htmlSource, baseCssData);
+            return _htmlContainerInt.SetResoureServerAsync(resourceServer);
         }
 
         /// <summary>

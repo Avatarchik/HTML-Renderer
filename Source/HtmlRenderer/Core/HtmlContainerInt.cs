@@ -13,6 +13,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using TheArtOfDev.HtmlRenderer.Adapters;
 using TheArtOfDev.HtmlRenderer.Adapters.Entities;
 using TheArtOfDev.HtmlRenderer.Core.Dom;
@@ -106,10 +107,7 @@ namespace TheArtOfDev.HtmlRenderer.Core
         /// </summary>
         private SelectionHandler _selectionHandler;
 
-        /// <summary>
-        /// Handler for downloading of images in the html
-        /// </summary>
-        private ImageDownloader _imageDownloader;
+        private IResourceServer _resourceServer;
 
         /// <summary>
         /// the text fore color use for selected text
@@ -142,16 +140,6 @@ namespace TheArtOfDev.HtmlRenderer.Core
         /// for geometry like backgrounds and borders
         /// </summary>
         private bool _avoidGeometryAntialias;
-
-        /// <summary>
-        /// Gets or sets a value indicating if image asynchronous loading should be avoided (default - false).<br/>
-        /// </summary>
-        private bool _avoidAsyncImagesLoading;
-
-        /// <summary>
-        /// Gets or sets a value indicating if image loading only when visible should be avoided (default - false).<br/>
-        /// </summary>
-        private bool _avoidImagesLateLoading;
 
         /// <summary>
         /// is the load of the html document is complete
@@ -271,12 +259,6 @@ namespace TheArtOfDev.HtmlRenderer.Core
         public event EventHandler<HtmlStylesheetLoadEventArgs> StylesheetLoad;
 
         /// <summary>
-        /// Raised when an image is about to be loaded by file path or URI.<br/>
-        /// This event allows to provide the image manually, if not handled the image will be loaded from file or download from URI.
-        /// </summary>
-        public event EventHandler<HtmlImageLoadEventArgs> ImageLoad;
-
-        /// <summary>
         /// the parsed stylesheet data used for handling the html
         /// </summary>
         public CssData CssData
@@ -291,41 +273,6 @@ namespace TheArtOfDev.HtmlRenderer.Core
         {
             get { return _avoidGeometryAntialias; }
             set { _avoidGeometryAntialias = value; }
-        }
-
-        /// <summary>
-        /// Gets or sets a value indicating if image asynchronous loading should be avoided (default - false).<br/>
-        /// True - images are loaded synchronously during html parsing.<br/>
-        /// False - images are loaded asynchronously to html parsing when downloaded from URL or loaded from disk.<br/>
-        /// </summary>
-        /// <remarks>
-        /// Asynchronously image loading allows to unblock html rendering while image is downloaded or loaded from disk using IO 
-        /// ports to achieve better performance.<br/>
-        /// Asynchronously image loading should be avoided when the full html content must be available during render, like render to image.
-        /// </remarks>
-        public bool AvoidAsyncImagesLoading
-        {
-            get { return _avoidAsyncImagesLoading; }
-            set { _avoidAsyncImagesLoading = value; }
-        }
-
-        /// <summary>
-        /// Gets or sets a value indicating if image loading only when visible should be avoided (default - false).<br/>
-        /// True - images are loaded as soon as the html is parsed.<br/>
-        /// False - images that are not visible because of scroll location are not loaded until they are scrolled to.
-        /// </summary>
-        /// <remarks>
-        /// Images late loading improve performance if the page contains image outside the visible scroll area, especially if there is large 
-        /// amount of images, as all image loading is delayed (downloading and loading into memory).<br/>
-        /// Late image loading may effect the layout and actual size as image without set size will not have actual size until they are loaded
-        /// resulting in layout change during user scroll.<br/>
-        /// Early image loading may also effect the layout if image without known size above the current scroll location are loaded as they
-        /// will push the html elements down.
-        /// </remarks>
-        public bool AvoidImagesLateLoading
-        {
-            get { return _avoidImagesLateLoading; }
-            set { _avoidImagesLateLoading = value; }
         }
 
         /// <summary>
@@ -499,17 +446,17 @@ namespace TheArtOfDev.HtmlRenderer.Core
             set { _selectionBackColor = value; }
         }
 
-        /// <summary>
-        /// Init with optional document and stylesheet.
-        /// </summary>
-        /// <param name="htmlSource">the html to init with, init empty if not given</param>
-        /// <param name="baseCssData">optional: the stylesheet to init with, init default if not given</param>
-        public void SetHtml(string htmlSource, CssData baseCssData = null)
-        {
+        public async Task SetResoureServerAsync(IResourceServer resourceServer)
+        { 
             Clear();
+
+            var htmlSource = await resourceServer.GetHtmlAsync();
+
             if (!string.IsNullOrEmpty(htmlSource))
             {
                 _loadComplete = false;
+
+                var baseCssData = await resourceServer.GetCssDataAsync();
                 _cssData = baseCssData ?? _adapter.DefaultCssData;
 
                 DomParser parser = new DomParser(_cssParser);
@@ -517,7 +464,7 @@ namespace TheArtOfDev.HtmlRenderer.Core
                 if (_root != null)
                 {
                     _selectionHandler = new SelectionHandler(_root);
-                    _imageDownloader = new ImageDownloader();
+                    _resourceServer = resourceServer;
                 }
             }
         }
@@ -536,9 +483,9 @@ namespace TheArtOfDev.HtmlRenderer.Core
                     _selectionHandler.Dispose();
                 _selectionHandler = null;
 
-                if (_imageDownloader != null)
-                    _imageDownloader.Dispose();
-                _imageDownloader = null;
+                if (_resourceServer != null)
+                    _resourceServer.Dispose();
+                _resourceServer = null;
 
                 _hoverBoxes = null;
             }
@@ -872,24 +819,6 @@ namespace TheArtOfDev.HtmlRenderer.Core
         }
 
         /// <summary>
-        /// Raise the image load event with the given event args.
-        /// </summary>
-        /// <param name="args">the event args</param>
-        internal void RaiseHtmlImageLoadEvent(HtmlImageLoadEventArgs args)
-        {
-            try
-            {
-                EventHandler<HtmlImageLoadEventArgs> handler = ImageLoad;
-                if (handler != null)
-                    handler(this, args);
-            }
-            catch (Exception ex)
-            {
-                ReportError(HtmlRenderErrorType.Image, "Failed image load event", ex);
-            }
-        }
-
-        /// <summary>
         /// Request invalidation and re-layout of the control hosting the renderer.
         /// </summary>
         /// <param name="layout">is re-layout is required for the refresh</param>
@@ -993,9 +922,9 @@ namespace TheArtOfDev.HtmlRenderer.Core
         /// Get image downloader to be used to download images for the current html rendering.<br/>
         /// Lazy create single downloader to be used for all images in the current html.
         /// </summary>
-        internal ImageDownloader GetImageDownloader()
+        internal IResourceServer ResourceServer
         {
-            return _imageDownloader;
+            get { return _resourceServer; }
         }
 
         /// <summary>
@@ -1042,7 +971,6 @@ namespace TheArtOfDev.HtmlRenderer.Core
                     Refresh = null;
                     RenderError = null;
                     StylesheetLoad = null;
-                    ImageLoad = null;
                 }
 
                 _cssData = null;

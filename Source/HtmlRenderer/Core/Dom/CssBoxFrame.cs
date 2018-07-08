@@ -56,11 +56,6 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
         private string _videoLinkUrl;
 
         /// <summary>
-        /// handler used for image loading by source
-        /// </summary>
-        private ImageLoadHandler _imageLoadHandler;
-
-        /// <summary>
         /// is image load is finished, used to know if no image is found
         /// </summary>
         private bool _imageLoadingComplete;
@@ -129,8 +124,6 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
         /// </summary>
         public override void Dispose()
         {
-            if (_imageLoadHandler != null)
-                _imageLoadHandler.Dispose();
             base.Dispose();
         }
 
@@ -443,10 +436,13 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
         /// <param name="g">the device to draw to</param>
         protected override void PaintImp(RGraphics g)
         {
-            if (_videoImageUrl != null && _imageLoadHandler == null)
+            if (_videoImageUrl != null)
             {
+                throw new NotImplementedException();
+                /*
                 _imageLoadHandler = new ImageLoadHandler(HtmlContainer, OnLoadImageComplete);
                 _imageLoadHandler.LoadImage(_videoImageUrl, HtmlTag != null ? HtmlTag.Attributes : null);
+                */
             }
 
             var rects = CommonUtils.GetFirstValueOrDefault(Rectangles);

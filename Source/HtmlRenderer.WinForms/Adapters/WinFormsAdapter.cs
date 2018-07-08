@@ -23,7 +23,7 @@ namespace TheArtOfDev.HtmlRenderer.WinForms.Adapters
     /// <summary>
     /// Adapter for WinForms platforms.
     /// </summary>
-    internal sealed class WinFormsAdapter : RAdapter
+    public sealed class WinFormsAdapter : RAdapter
     {
         #region Fields and Consts
 

@@ -13,6 +13,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Threading.Tasks;
 using TheArtOfDev.HtmlRenderer.Adapters;
 using TheArtOfDev.HtmlRenderer.Adapters.Entities;
 using TheArtOfDev.HtmlRenderer.Core.Entities;
@@ -75,11 +76,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
         private CssLineBox _firstHostingLineBox;
         private CssLineBox _lastHostingLineBox;
 
-        /// <summary>
-        /// handler for loading background image
-        /// </summary>
-        private ImageLoadHandler _imageLoadHandler;
-
+        private RImage _backgroundImage;
         #endregion
 
 
@@ -593,9 +590,6 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
         /// </summary>
         public virtual void Dispose()
         {
-            if (_imageLoadHandler != null)
-                _imageLoadHandler.Dispose();
-
             foreach (var childBox in Boxes)
             {
                 childBox.Dispose();
@@ -711,12 +705,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
         {
             if (!_wordsSizeMeasured)
             {
-                if (BackgroundImage != CssConstants.None && _imageLoadHandler == null)
-                {
-                    _imageLoadHandler = new ImageLoadHandler(HtmlContainer, OnImageLoadComplete);
-                    _imageLoadHandler.LoadImage(BackgroundImage, HtmlTag != null ? HtmlTag.Attributes : null);
-                }
-
+                LoadBackgroundImageAsync();
                 MeasureWordSpacing(g);
 
                 if (Words.Count > 0)
@@ -729,6 +718,21 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
                 }
 
                 _wordsSizeMeasured = true;
+            }
+        }
+
+        async Task LoadBackgroundImageAsync()
+        {
+            if (BackgroundImage != CssConstants.None)
+            {
+                var backgroundImage = await HtmlContainer.ResourceServer.GetImageAsync(
+                    BackgroundImage, HtmlTag != null ? HtmlTag.Attributes : null);
+
+                if (backgroundImage != null)
+                {
+                    _backgroundImage = backgroundImage;
+                    HtmlContainer.RequestRefresh(false);
+                }
             }
         }
 
@@ -1345,9 +1349,9 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
                     brush.Dispose();
                 }
 
-                if (_imageLoadHandler != null && _imageLoadHandler.Image != null && isFirst)
+                if (_backgroundImage!=null && isFirst)
                 {
-                    BackgroundImageDrawHandler.DrawBackgroundImage(g, this, _imageLoadHandler, rect);
+                    BackgroundImageDrawHandler.DrawBackgroundImage(g, this, _backgroundImage, RRect.Empty, rect);
                 }
             }
         }
@@ -1472,18 +1476,6 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
         internal void RectanglesReset()
         {
             _rectangles.Clear();
-        }
-
-        /// <summary>
-        /// On image load process complete with image request refresh for it to be painted.
-        /// </summary>
-        /// <param name="image">the image loaded or null if failed</param>
-        /// <param name="rectangle">the source rectangle to draw in the image (empty - draw everything)</param>
-        /// <param name="async">is the callback was called async to load image call</param>
-        private void OnImageLoadComplete(RImage image, RRect rectangle, bool async)
-        {
-            if (image != null && async)
-                HtmlContainer.RequestRefresh(false);
         }
 
         /// <summary>

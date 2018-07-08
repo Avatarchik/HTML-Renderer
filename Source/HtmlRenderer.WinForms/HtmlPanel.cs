@@ -104,6 +104,18 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         /// </summary>
         protected Point _lastScrollOffset;
 
+        IResourceServer _resourceServer;
+        IResourceServer ResourceServer
+        {
+            get
+            {
+                if (_resourceServer == null)
+                {
+                    _resourceServer = ResourceServerFactory.Create();
+                }
+                return _resourceServer;
+            }
+        }
         #endregion
 
 
@@ -125,7 +137,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
             _htmlContainer.Refresh += OnRefresh;
             _htmlContainer.ScrollChange += OnScrollChange;
             _htmlContainer.StylesheetLoad += OnStylesheetLoad;
-            _htmlContainer.ImageLoad += OnImageLoad;
         }
 
         /// <summary>
@@ -159,12 +170,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         public event EventHandler<HtmlStylesheetLoadEventArgs> StylesheetLoad;
 
         /// <summary>
-        /// Raised when an image is about to be loaded by file path or URI.<br/>
-        /// This event allows to provide the image manually, if not handled the image will be loaded from file or download from URI.
-        /// </summary>
-        public event EventHandler<HtmlImageLoadEventArgs> ImageLoad;
-
-        /// <summary>
         /// Gets or sets a value indicating if anti-aliasing should be avoided for geometry like backgrounds and borders (default - false).
         /// </summary>
         [Category("Behavior")]
@@ -174,28 +179,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         {
             get { return _htmlContainer.AvoidGeometryAntialias; }
             set { _htmlContainer.AvoidGeometryAntialias = value; }
-        }
-
-        /// <summary>
-        /// Gets or sets a value indicating if image loading only when visible should be avoided (default - false).<br/>
-        /// True - images are loaded as soon as the html is parsed.<br/>
-        /// False - images that are not visible because of scroll location are not loaded until they are scrolled to.
-        /// </summary>
-        /// <remarks>
-        /// Images late loading improve performance if the page contains image outside the visible scroll area, especially if there is large 
-        /// amount of images, as all image loading is delayed (downloading and loading into memory).<br/>
-        /// Late image loading may effect the layout and actual size as image without set size will not have actual size until they are loaded
-        /// resulting in layout change during user scroll.<br/>
-        /// Early image loading may also effect the layout if image without known size above the current scroll location are loaded as they
-        /// will push the html elements down.
-        /// </remarks>
-        [Category("Behavior")]
-        [DefaultValue(false)]
-        [Description("If image loading only when visible should be avoided")]
-        public virtual bool AvoidImagesLateLoading
-        {
-            get { return _htmlContainer.AvoidImagesLateLoading; }
-            set { _htmlContainer.AvoidImagesLateLoading = value; }
         }
 
         /// <summary>
@@ -311,7 +294,8 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
             {
                 _baseRawCssData = value;
                 _baseCssData = HtmlRender.ParseStyleSheet(value);
-                _htmlContainer.SetHtml(_text, _baseCssData);
+                ResourceServer.SetCssData(_baseCssData);
+                _htmlContainer.SetResourceServerAsync(ResourceServer);
             }
         }
 
@@ -341,7 +325,8 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
                 if (!IsDisposed)
                 {
                     VerticalScroll.Value = VerticalScroll.Minimum;
-                    _htmlContainer.SetHtml(_text, _baseCssData);
+                    ResourceServer.SetHtml(_text);
+                    _htmlContainer.SetResourceServerAsync(ResourceServer);
                     PerformLayout();
                     Invalidate();
                     InvokeMouseMove();
@@ -664,16 +649,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         }
 
         /// <summary>
-        /// Propagate the image load event from root container.
-        /// </summary>
-        protected virtual void OnImageLoad(HtmlImageLoadEventArgs e)
-        {
-            var handler = ImageLoad;
-            if (handler != null)
-                handler(this, e);
-        }
-
-        /// <summary>
         /// Handle html renderer invalidate and re-layout as requested.
         /// </summary>
         protected virtual void OnRefresh(HtmlRefreshEventArgs e)
@@ -780,7 +755,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
                 _htmlContainer.Refresh -= OnRefresh;
                 _htmlContainer.ScrollChange -= OnScrollChange;
                 _htmlContainer.StylesheetLoad -= OnStylesheetLoad;
-                _htmlContainer.ImageLoad -= OnImageLoad;
                 _htmlContainer.Dispose();
                 _htmlContainer = null;
             }
@@ -811,11 +785,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         private void OnStylesheetLoad(object sender, HtmlStylesheetLoadEventArgs e)
         {
             OnStylesheetLoad(e);
-        }
-
-        private void OnImageLoad(object sender, HtmlImageLoadEventArgs e)
-        {
-            OnImageLoad(e);
         }
 
         private void OnRefresh(object sender, HtmlRefreshEventArgs e)

@@ -131,7 +131,6 @@ namespace TheArtOfDev.HtmlRenderer.Demo.WinForms
             // 
             this._htmlPanel.AutoScroll = true;
             this._htmlPanel.AvoidGeometryAntialias = false;
-            this._htmlPanel.AvoidImagesLateLoading = false;
             this._htmlPanel.BackColor = System.Drawing.SystemColors.Window;
             this._htmlPanel.BaseStylesheet = null;
             this._htmlPanel.Dock = System.Windows.Forms.DockStyle.Fill;

@@ -20,6 +20,7 @@ using TheArtOfDev.HtmlRenderer.Demo.Common;
 using TheArtOfDev.HtmlRenderer.PdfSharp;
 using TheArtOfDev.HtmlRenderer.WinForms;
 using PdfSharp;
+using System.Threading.Tasks;
 
 namespace TheArtOfDev.HtmlRenderer.Demo.WinForms
 {
@@ -34,6 +35,7 @@ namespace TheArtOfDev.HtmlRenderer.Demo.WinForms
 
         #endregion
 
+        WinFormsDemoResourceServer _resourceServer = new WinFormsDemoResourceServer();
 
         /// <summary>
         /// Init.
@@ -138,13 +140,13 @@ namespace TheArtOfDev.HtmlRenderer.Demo.WinForms
         /// <summary>
         /// Create PDF using PdfSharp project, save to file and open that file.
         /// </summary>
-        private void OnGeneratePdf_Click(object sender, EventArgs e)
+        private async Task OnGeneratePdf_Click(object sender, EventArgs e)
         {
             PdfGenerateConfig config = new PdfGenerateConfig();
             config.PageSize = PageSize.A4;
             config.SetMargins(20);
 
-            var doc = PdfGenerator.GeneratePdf(_mainControl.GetHtml(), config, null, DemoUtils.OnStylesheetLoad, HtmlRenderingHelper.OnImageLoadPdfSharp);
+            var doc = await PdfGenerator.GeneratePdf(_resourceServer, config, DemoUtils.OnStylesheetLoad);
             var tmpFile = Path.GetTempFileName();
             tmpFile = Path.GetFileNameWithoutExtension(tmpFile) + ".pdf";
             doc.Save(tmpFile);

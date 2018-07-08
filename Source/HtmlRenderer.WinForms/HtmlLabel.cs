@@ -111,7 +111,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         /// The text rendering hint to be used for text rendering.
         /// </summary>
         protected TextRenderingHint _textRenderingHint = TextRenderingHint.SystemDefault;
-
         #endregion
 
 
@@ -130,17 +129,17 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
             SetStyle(ControlStyles.Opaque, false);
 
             _htmlContainer = new HtmlContainer();
-            _htmlContainer.AvoidImagesLateLoading = true;
             _htmlContainer.MaxSize = MaximumSize;
             _htmlContainer.LoadComplete += OnLoadComplete;
             _htmlContainer.LinkClicked += OnLinkClicked;
             _htmlContainer.RenderError += OnRenderError;
             _htmlContainer.Refresh += OnRefresh;
             _htmlContainer.StylesheetLoad += OnStylesheetLoad;
-            _htmlContainer.ImageLoad += OnImageLoad;
 
             ResumeLayout(false);
         }
+
+        public IResourceServer ResourceServer;
 
         /// <summary>
         ///   Raised when the BorderStyle property value changes.
@@ -303,7 +302,8 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
             {
                 _baseRawCssData = value;
                 _baseCssData = HtmlRender.ParseStyleSheet(value);
-                _htmlContainer.SetHtml(_text, _baseCssData);
+                ResourceServer.SetCssData(_baseCssData);
+                _htmlContainer.SetResourceServerAsync(ResourceServer);
             }
         }
 
@@ -396,7 +396,8 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
                 base.Text = value;
                 if (!IsDisposed)
                 {
-                    _htmlContainer.SetHtml(_text, _baseCssData);
+                    ResourceServer.SetHtml(_text);
+                    _htmlContainer.SetResourceServerAsync(ResourceServer);
                     PerformLayout();
                     Invalidate();
                 }
@@ -683,7 +684,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
                 _htmlContainer.RenderError -= OnRenderError;
                 _htmlContainer.Refresh -= OnRefresh;
                 _htmlContainer.StylesheetLoad -= OnStylesheetLoad;
-                _htmlContainer.ImageLoad -= OnImageLoad;
                 _htmlContainer.Dispose();
                 _htmlContainer = null;
             }

@@ -16,6 +16,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using TheArtOfDev.HtmlRenderer.Core;
 using TheArtOfDev.HtmlRenderer.Core.Entities;
 using TheArtOfDev.HtmlRenderer.Demo.Common;
 using Timer = System.Threading.Timer;
@@ -51,16 +52,17 @@ namespace TheArtOfDev.HtmlRenderer.Demo.WinForms
 
         public MainControl()
         {
+            ResourceServerFactory.Iniialize(() => new WinFormsDemoResourceServer());
+
             InitializeComponent();
 
             _htmlPanel.RenderError += OnRenderError;
             _htmlPanel.LinkClicked += OnLinkClicked;
             _htmlPanel.StylesheetLoad += DemoUtils.OnStylesheetLoad;
-            _htmlPanel.ImageLoad += HtmlRenderingHelper.OnImageLoad;
-            _htmlToolTip.ImageLoad += HtmlRenderingHelper.OnImageLoad;
             _htmlPanel.LoadComplete += (sender, args) => _htmlPanel.ScrollToElement("C4");
 
             _htmlToolTip.SetToolTip(_htmlPanel, Resources.Tooltip);
+            _htmlToolTip.ResourceServer = new WinFormsDemoResourceServer();
 
             _htmlEditor.Font = new Font(FontFamily.GenericMonospace, 10);
 
@@ -195,7 +197,7 @@ namespace TheArtOfDev.HtmlRenderer.Demo.WinForms
 
                 try
                 {
-                    _htmlPanel.AvoidImagesLateLoading = !sample.FullName.Contains("Many images");
+                    //_htmlPanel.AvoidImagesLateLoading = !sample.FullName.Contains("Many images");
 
                     _htmlPanel.Text = sample.Html;
                 }
@@ -256,6 +258,9 @@ namespace TheArtOfDev.HtmlRenderer.Demo.WinForms
         {
             var html = _htmlEditor.Text;
 
+            throw new NotImplementedException();
+
+#if flase
             html = Regex.Replace(html, @"src=\""(\w.*?)\""", match =>
             {
                 var img = HtmlRenderingHelper.TryLoadResourceImage(match.Groups[1].Value);
@@ -279,6 +284,7 @@ namespace TheArtOfDev.HtmlRenderer.Demo.WinForms
                 }
                 return match.Value;
             }, RegexOptions.IgnoreCase);
+#endif
 
             return html;
         }
@@ -330,6 +336,6 @@ namespace TheArtOfDev.HtmlRenderer.Demo.WinForms
             _htmlEditor.SelectionStart = selectionStart;
         }
 
-        #endregion
+#endregion
     }
 }

@@ -11,6 +11,7 @@
 // "The Art of War"
 
 using System;
+using System.Threading.Tasks;
 using TheArtOfDev.HtmlRenderer.Adapters;
 using TheArtOfDev.HtmlRenderer.Adapters.Entities;
 using TheArtOfDev.HtmlRenderer.Core.Handlers;
@@ -29,11 +30,6 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
         /// the image word of this image box
         /// </summary>
         private readonly CssRectImage _imageWord;
-
-        /// <summary>
-        /// handler used for image loading by source
-        /// </summary>
-        private ImageLoadHandler _imageLoadHandler;
 
         /// <summary>
         /// is image load is finished, used to know if no image is found
@@ -69,13 +65,6 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
         /// <param name="g">the device to draw to</param>
         protected override void PaintImp(RGraphics g)
         {
-            // load image if it is in visible rectangle
-            if (_imageLoadHandler == null)
-            {
-                _imageLoadHandler = new ImageLoadHandler(HtmlContainer, OnLoadImageComplete);
-                _imageLoadHandler.LoadImage(GetAttribute("src"), HtmlTag != null ? HtmlTag.Attributes : null);
-            }
-
             var rect = CommonUtils.GetFirstValueOrDefault(Rectangles);
             RPoint offset = RPoint.Empty;
 
@@ -139,15 +128,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
         {
             if (!_wordsSizeMeasured)
             {
-                if (_imageLoadHandler == null && (HtmlContainer.AvoidAsyncImagesLoading || HtmlContainer.AvoidImagesLateLoading))
-                {
-                    _imageLoadHandler = new ImageLoadHandler(HtmlContainer, OnLoadImageComplete);
-
-                    if (this.Content != null && this.Content != CssConstants.Normal)
-                        _imageLoadHandler.LoadImage(this.Content, HtmlTag != null ? HtmlTag.Attributes : null);
-                    else
-                        _imageLoadHandler.LoadImage(GetAttribute("src"), HtmlTag != null ? HtmlTag.Attributes : null);
-                }
+                LoadImageAsync();
 
                 MeasureWordSpacing(g);
                 _wordsSizeMeasured = true;
@@ -156,13 +137,41 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
             CssLayoutEngine.MeasureImageSize(_imageWord);
         }
 
+        async Task LoadImageAsync()
+        {
+            RImage image;
+            if (this.Content != null && this.Content != CssConstants.Normal)
+                image = await HtmlContainer.ResourceServer.GetImageAsync(
+                    this.Content, 
+                    HtmlTag != null ? HtmlTag.Attributes : null);
+            else
+                image = await HtmlContainer.ResourceServer.GetImageAsync(
+                    GetAttribute("src"), 
+                    HtmlTag != null ? HtmlTag.Attributes : null);
+
+            _imageWord.Image = image;
+            _imageWord.ImageRectangle = RRect.Empty; // rectangle;
+            _imageLoadingComplete = true;
+            _wordsSizeMeasured = false;
+
+            if (_imageLoadingComplete && image == null)
+            {
+                SetErrorBorder();
+            }
+
+            {
+                var width = new CssLength(Width);
+                var height = new CssLength(Height);
+                var layout = (width.Number <= 0 || width.Unit != CssUnit.Pixels) || (height.Number <= 0 || height.Unit != CssUnit.Pixels);
+                HtmlContainer.RequestRefresh(layout);
+            }
+        }
+
         /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
         /// </summary>
         public override void Dispose()
         {
-            if (_imageLoadHandler != null)
-                _imageLoadHandler.Dispose();
             base.Dispose();
         }
 
@@ -177,34 +186,6 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
             SetAllBorders(CssConstants.Solid, "2px", "#A0A0A0");
             BorderRightColor = BorderBottomColor = "#E3E3E3";
         }
-
-        /// <summary>
-        /// On image load process is complete with image or without update the image box.
-        /// </summary>
-        /// <param name="image">the image loaded or null if failed</param>
-        /// <param name="rectangle">the source rectangle to draw in the image (empty - draw everything)</param>
-        /// <param name="async">is the callback was called async to load image call</param>
-        private void OnLoadImageComplete(RImage image, RRect rectangle, bool async)
-        {
-            _imageWord.Image = image;
-            _imageWord.ImageRectangle = rectangle;
-            _imageLoadingComplete = true;
-            _wordsSizeMeasured = false;
-
-            if (_imageLoadingComplete && image == null)
-            {
-                SetErrorBorder();
-            }
-
-            if (!HtmlContainer.AvoidImagesLateLoading || async)
-            {
-                var width = new CssLength(Width);
-                var height = new CssLength(Height);
-                var layout = (width.Number <= 0 || width.Unit != CssUnit.Pixels) || (height.Number <= 0 || height.Unit != CssUnit.Pixels);
-                HtmlContainer.RequestRefresh(layout);
-            }
-        }
-
         #endregion
     }
 }
