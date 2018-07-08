@@ -25,10 +25,20 @@ namespace TheArtOfDev.HtmlRenderer.Demo.WinForms
             m_html=html;
         }
 
+        public async Task<string> GetHtmlAsync()
+        {
+            return m_html;
+        }
+
         CssData m_cssData;
         public void SetCssData(CssData cssData)
         {
             m_cssData=cssData;
+        }
+
+        public async Task<CssData> GetCssDataAsync()
+        {
+            return m_cssData;
         }
 
         public WinFormsDemoResourceServer(string html="", CssData cssData=null)
@@ -41,14 +51,9 @@ namespace TheArtOfDev.HtmlRenderer.Demo.WinForms
         {
         }
 
-        public async Task<CssData> GetCssDataAsync()
+        public async Task<CssData> GetCssDataAsync(string src, Dictionary<string, string> attributes)
         {
-            return m_cssData;
-        }
-
-        public async Task<string> GetHtmlAsync()
-        {
-            return m_html;
+            return CssData.Parse(WinFormsAdapter.Instance, DemoUtils.GetStylesheet(src));
         }
 
         /// <summary>

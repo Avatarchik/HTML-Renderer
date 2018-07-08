@@ -12,6 +12,7 @@
 
 using System;
 using System.Globalization;
+using System.Threading.Tasks;
 using TheArtOfDev.HtmlRenderer.Adapters.Entities;
 using TheArtOfDev.HtmlRenderer.Core.Dom;
 using TheArtOfDev.HtmlRenderer.Core.Entities;
@@ -45,6 +46,25 @@ namespace TheArtOfDev.HtmlRenderer.Core.Parse
             _cssParser = cssParser;
         }
 
+        public class CssDataWithChanged
+        {
+            public CssData cssData;
+            public bool cssDataChanged;
+
+            /// <summary>
+            /// Clone css data if it has not already been cloned.<br/>
+            /// Used to preserve the base css data used when changed by style inside html.
+            /// </summary>
+            public void CloneCssData()
+            {
+                if (!cssDataChanged)
+                {
+                    cssDataChanged = true;
+                    cssData = cssData.Clone();
+                }
+            }
+        }
+
         /// <summary>
         /// Generate css tree by parsing the given html and applying the given css style data on it.
         /// </summary>
@@ -52,19 +72,18 @@ namespace TheArtOfDev.HtmlRenderer.Core.Parse
         /// <param name="htmlContainer">the html container to use for reference resolve</param>
         /// <param name="cssData">the css data to use</param>
         /// <returns>the root of the generated tree</returns>
-        public CssBox GenerateCssTree(string html, HtmlContainerInt htmlContainer, ref CssData cssData)
+        public async Task<CssBox> GenerateCssTree(string html, HtmlContainerInt htmlContainer, CssDataWithChanged cssData)
         {
             var root = HtmlParser.ParseDocument(html);
             if (root != null)
             {
                 root.HtmlContainer = htmlContainer;
 
-                bool cssDataChanged = false;
-                CascadeParseStyles(root, htmlContainer, ref cssData, ref cssDataChanged);
+                await CascadeParseStyles(root, htmlContainer, cssData);
 
-                CascadeApplyStyles(root, cssData);
+                CascadeApplyStyles(root, cssData.cssData);
 
-                SetTextSelectionStyle(htmlContainer, cssData);
+                SetTextSelectionStyle(htmlContainer, cssData.cssData);
 
                 CorrectTextBoxes(root);
 
@@ -84,7 +103,6 @@ namespace TheArtOfDev.HtmlRenderer.Core.Parse
 
 
         #region Private methods
-
         /// <summary>
         /// Read styles defined inside the dom structure in links and style elements.<br/>
         /// If the html tag is "style" tag parse it content and add to the css data for all future tags parsing.<br/>
@@ -94,7 +112,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Parse
         /// <param name="htmlContainer">the html container to use for reference resolve</param>
         /// <param name="cssData">the style data to fill with found styles</param>
         /// <param name="cssDataChanged">check if the css data has been modified by the handled html not to change the base css data</param>
-        private void CascadeParseStyles(CssBox box, HtmlContainerInt htmlContainer, ref CssData cssData, ref bool cssDataChanged)
+        private async Task CascadeParseStyles(CssBox box, HtmlContainerInt htmlContainer, CssDataWithChanged cssData)
         {
             if (box.HtmlTag != null)
             {
@@ -102,28 +120,37 @@ namespace TheArtOfDev.HtmlRenderer.Core.Parse
                 if (box.HtmlTag.Name.Equals("link", StringComparison.CurrentCultureIgnoreCase) &&
                     box.GetAttribute("rel", string.Empty).Equals("stylesheet", StringComparison.CurrentCultureIgnoreCase))
                 {
-                    CloneCssData(ref cssData, ref cssDataChanged);
+                    cssData.CloneCssData();
+
+                    var stylesheetData = await htmlContainer.ResourceServer.GetCssDataAsync(box.GetAttribute("href", string.Empty), box.HtmlTag.Attributes);
+
+                    /*
                     string stylesheet;
                     CssData stylesheetData;
-                    StylesheetLoadHandler.LoadStylesheet(htmlContainer, box.GetAttribute("href", string.Empty), box.HtmlTag.Attributes, out stylesheet, out stylesheetData);
+                    StylesheetLoadHandler.LoadStylesheet(htmlContainer, 
+                        box.GetAttribute("href", string.Empty), 
+                        box.HtmlTag.Attributes, out stylesheet, out stylesheetData);
+                        */
+                    /*
                     if (stylesheet != null)
                         _cssParser.ParseStyleSheet(cssData, stylesheet);
-                    else if (stylesheetData != null)
-                        cssData.Combine(stylesheetData);
+                    else */
+                    if (stylesheetData != null)
+                        cssData.cssData.Combine(stylesheetData);
                 }
 
                 // Check for the <style> tag
                 if (box.HtmlTag.Name.Equals("style", StringComparison.CurrentCultureIgnoreCase) && box.Boxes.Count > 0)
                 {
-                    CloneCssData(ref cssData, ref cssDataChanged);
+                    cssData.CloneCssData();
                     foreach (var child in box.Boxes)
-                        _cssParser.ParseStyleSheet(cssData, child.Text.CutSubstring());
+                        _cssParser.ParseStyleSheet(cssData.cssData, child.Text.CutSubstring());
                 }
             }
 
             foreach (var childBox in box.Boxes)
             {
-                CascadeParseStyles(childBox, htmlContainer, ref cssData, ref cssDataChanged);
+                await CascadeParseStyles(childBox, htmlContainer, cssData);
             }
         }
 
@@ -389,19 +416,6 @@ namespace TheArtOfDev.HtmlRenderer.Core.Parse
                 }
             }
             return true;
-        }
-
-        /// <summary>
-        /// Clone css data if it has not already been cloned.<br/>
-        /// Used to preserve the base css data used when changed by style inside html.
-        /// </summary>
-        private static void CloneCssData(ref CssData cssData, ref bool cssDataChanged)
-        {
-            if (!cssDataChanged)
-            {
-                cssDataChanged = true;
-                cssData = cssData.Clone();
-            }
         }
 
         /// <summary>

@@ -81,7 +81,6 @@
     <Compile Include="Core\Handlers\ContextMenuHandler.cs" />
     <Compile Include="Core\Handlers\FontsHandler.cs" />
     <Compile Include="Core\Handlers\SelectionHandler.cs" />
-    <Compile Include="Core\Handlers\StylesheetLoadHandler.cs" />
     <Compile Include="Core\HtmlRendererUtils.cs" />
     <Compile Include="Core\Parse\CssParser.cs" />
     <Compile Include="Core\Parse\CssValueParser.cs" />

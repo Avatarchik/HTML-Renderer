@@ -106,7 +106,7 @@ namespace TheArtOfDev.HtmlRenderer.Demo.WinForms
                 Image img;
                 if (_useGdiPlusTSB.Checked || HtmlRenderingHelper.IsRunningOnMono())
                 {
-                    img = await HtmlRender.RenderToImageGdiPlus(_resourceServer, _pictureBox.ClientSize, textRenderingHint, DemoUtils.OnStylesheetLoad);
+                    img = await HtmlRender.RenderToImageGdiPlus(_resourceServer, _pictureBox.ClientSize, textRenderingHint);
                 }
                 else
                 {

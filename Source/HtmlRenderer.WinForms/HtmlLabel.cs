@@ -134,7 +134,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
             _htmlContainer.LinkClicked += OnLinkClicked;
             _htmlContainer.RenderError += OnRenderError;
             _htmlContainer.Refresh += OnRefresh;
-            _htmlContainer.StylesheetLoad += OnStylesheetLoad;
 
             ResumeLayout(false);
         }
@@ -163,13 +162,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         /// Raised when an error occurred during html rendering.<br/>
         /// </summary>
         public event EventHandler<HtmlRenderErrorEventArgs> RenderError;
-
-        /// <summary>
-        /// Raised when aa stylesheet is about to be loaded by file path or URI by link element.<br/>
-        /// This event allows to provide the stylesheet manually or provide new source (file or uri) to load from.<br/>
-        /// If no alternative data is provided the original source will be used.<br/>
-        /// </summary>
-        public event EventHandler<HtmlStylesheetLoadEventArgs> StylesheetLoad;
 
         /// <summary>
         /// Raised when an image is about to be loaded by file path or URI.<br/>
@@ -617,16 +609,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         }
 
         /// <summary>
-        /// Propagate the stylesheet load event from root container.
-        /// </summary>
-        protected virtual void OnStylesheetLoad(HtmlStylesheetLoadEventArgs e)
-        {
-            var handler = StylesheetLoad;
-            if (handler != null)
-                handler(this, e);
-        }
-
-        /// <summary>
         /// Propagate the image load event from root container.
         /// </summary>
         protected virtual void OnImageLoad(HtmlImageLoadEventArgs e)
@@ -683,7 +665,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
                 _htmlContainer.LinkClicked -= OnLinkClicked;
                 _htmlContainer.RenderError -= OnRenderError;
                 _htmlContainer.Refresh -= OnRefresh;
-                _htmlContainer.StylesheetLoad -= OnStylesheetLoad;
                 _htmlContainer.Dispose();
                 _htmlContainer = null;
             }
@@ -709,11 +690,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
                 Invoke(new MethodInvoker(() => OnRenderError(e)));
             else
                 OnRenderError(e);
-        }
-
-        private void OnStylesheetLoad(object sender, HtmlStylesheetLoadEventArgs e)
-        {
-            OnStylesheetLoad(e);
         }
 
         private void OnImageLoad(object sender, HtmlImageLoadEventArgs e)

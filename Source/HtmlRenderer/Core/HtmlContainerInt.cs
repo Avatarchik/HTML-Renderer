@@ -252,13 +252,6 @@ namespace TheArtOfDev.HtmlRenderer.Core
         public event EventHandler<HtmlRenderErrorEventArgs> RenderError;
 
         /// <summary>
-        /// Raised when a stylesheet is about to be loaded by file path or URI by link element.<br/>
-        /// This event allows to provide the stylesheet manually or provide new source (file or Uri) to load from.<br/>
-        /// If no alternative data is provided the original source will be used.<br/>
-        /// </summary>
-        public event EventHandler<HtmlStylesheetLoadEventArgs> StylesheetLoad;
-
-        /// <summary>
         /// the parsed stylesheet data used for handling the html
         /// </summary>
         public CssData CssData
@@ -447,8 +440,9 @@ namespace TheArtOfDev.HtmlRenderer.Core
         }
 
         public async Task SetResoureServerAsync(IResourceServer resourceServer)
-        { 
+        {
             Clear();
+            _resourceServer = resourceServer;
 
             var htmlSource = await resourceServer.GetHtmlAsync();
 
@@ -460,11 +454,18 @@ namespace TheArtOfDev.HtmlRenderer.Core
                 _cssData = baseCssData ?? _adapter.DefaultCssData;
 
                 DomParser parser = new DomParser(_cssParser);
-                _root = parser.GenerateCssTree(htmlSource, this, ref _cssData);
+                var cssData = new DomParser.CssDataWithChanged
+                {
+                    cssData = _cssData
+                };
+                _root = await parser.GenerateCssTree(htmlSource, this, cssData);
+                if (cssData.cssDataChanged)
+                {
+                    _cssData = cssData.cssData;
+                }
                 if (_root != null)
                 {
                     _selectionHandler = new SelectionHandler(_root);
-                    _resourceServer = resourceServer;
                 }
             }
         }
@@ -801,24 +802,6 @@ namespace TheArtOfDev.HtmlRenderer.Core
         }
 
         /// <summary>
-        /// Raise the stylesheet load event with the given event args.
-        /// </summary>
-        /// <param name="args">the event args</param>
-        internal void RaiseHtmlStylesheetLoadEvent(HtmlStylesheetLoadEventArgs args)
-        {
-            try
-            {
-                EventHandler<HtmlStylesheetLoadEventArgs> handler = StylesheetLoad;
-                if (handler != null)
-                    handler(this, args);
-            }
-            catch (Exception ex)
-            {
-                ReportError(HtmlRenderErrorType.CssParsing, "Failed stylesheet load event", ex);
-            }
-        }
-
-        /// <summary>
         /// Request invalidation and re-layout of the control hosting the renderer.
         /// </summary>
         /// <param name="layout">is re-layout is required for the refresh</param>
@@ -970,7 +953,6 @@ namespace TheArtOfDev.HtmlRenderer.Core
                     LinkClicked = null;
                     Refresh = null;
                     RenderError = null;
-                    StylesheetLoad = null;
                 }
 
                 _cssData = null;

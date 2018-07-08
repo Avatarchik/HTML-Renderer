@@ -96,7 +96,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
             _htmlContainer.IsContextMenuEnabled = false;
             _htmlContainer.AvoidGeometryAntialias = true;
             _htmlContainer.RenderError += OnRenderError;
-            _htmlContainer.StylesheetLoad += OnStylesheetLoad;
 
             Popup += OnToolTipPopup;
             Draw += OnToolTipDraw;
@@ -125,13 +124,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         /// Raised when an error occurred during html rendering.<br/>
         /// </summary>
         public event EventHandler<HtmlRenderErrorEventArgs> RenderError;
-
-        /// <summary>
-        /// Raised when aa stylesheet is about to be loaded by file path or URI by link element.<br/>
-        /// This event allows to provide the stylesheet manually or provide new source (file or uri) to load from.<br/>
-        /// If no alternative data is provided the original source will be used.<br/>
-        /// </summary>
-        public event EventHandler<HtmlStylesheetLoadEventArgs> StylesheetLoad;
 
         /// <summary>
         /// Use GDI+ text rendering to measure/draw text.<br/>
@@ -336,16 +328,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
                 handler(this, e);
         }
 
-        /// <summary>
-        /// Propagate the stylesheet load event from root container.
-        /// </summary>
-        protected virtual void OnStylesheetLoad(HtmlStylesheetLoadEventArgs e)
-        {
-            var handler = StylesheetLoad;
-            if (handler != null)
-                handler(this, e);
-        }
-
 #if !MONO
         /// <summary>
         /// Raised on link handling timer tick, used for:
@@ -406,7 +388,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
             if (_htmlContainer != null)
             {
                 _htmlContainer.RenderError -= OnRenderError;
-                _htmlContainer.StylesheetLoad -= OnStylesheetLoad;
                 _htmlContainer.Dispose();
                 _htmlContainer = null;
             }
@@ -438,11 +419,6 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         private void OnRenderError(object sender, HtmlRenderErrorEventArgs e)
         {
             OnRenderError(e);
-        }
-
-        private void OnStylesheetLoad(object sender, HtmlStylesheetLoadEventArgs e)
-        {
-            OnStylesheetLoad(e);
         }
 
 #if !MONO

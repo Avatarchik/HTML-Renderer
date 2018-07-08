@@ -14,6 +14,7 @@ namespace TheArtOfDev.HtmlRenderer.Core
         void SetCssData(CssData cssData);
         Task<CssData> GetCssDataAsync();
 
+        Task<CssData> GetCssDataAsync(string location, Dictionary<string, string> attributes);
         Task<RImage> GetImageAsync(string location, Dictionary<string, string> attributes);
     }
 
