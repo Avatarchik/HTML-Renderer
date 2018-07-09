@@ -105,7 +105,7 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         protected Point _lastScrollOffset;
 
         IResourceServer _resourceServer;
-        IResourceServer ResourceServer
+        public IResourceServer ResourceServer
         {
             get
             {
@@ -114,6 +114,11 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
                     _resourceServer = ResourceServerFactory.Create();
                 }
                 return _resourceServer;
+            }
+            set
+            {
+                if (_resourceServer == value) return;
+                _resourceServer = value;
             }
         }
         #endregion

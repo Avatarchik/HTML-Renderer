@@ -1,25 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using TheArtOfDev.HtmlRenderer.Adapters;
+using TheArtOfDev.HtmlRenderer.Core;
 
 
-namespace TheArtOfDev.HtmlRenderer.Core
+namespace HtmlRenderer.SimpleBrowser
 {
-    public interface IResourceServer: IDisposable
+    class HttpResourceServer : IResourceServer
     {
-        void SetHtml(string html);
-        Task<String> GetHtmlAsync();
+        string m_url;
+        HttpSession m_session;
 
-        void SetCssData(CssData cssData);
-        Task<CssData> GetCssDataAsync();
+        public HttpResourceServer()
+        {
+            m_session = new HttpSession();
+        }
 
-        Task<CssData> GetCssDataAsync(string location, Dictionary<string, string> attributes);
-        Task<RImage> GetImageAsync(string location, Dictionary<string, string> attributes);
-    }
+        public async Task Go(string url)
+        {
+            var result = await m_session.Get(url);
+            var bytes = result.GetBodyBytes();
+            m_html = Encoding.UTF8.GetString(bytes.ToArray());
+        }
 
-    public class DefaultResourceServer : IResourceServer
-    {
+        #region Interface
         public void Dispose()
         {
         }
@@ -53,21 +60,6 @@ namespace TheArtOfDev.HtmlRenderer.Core
         {
             throw new NotImplementedException();
         }
-    }
-
-    public static class ResourceServerFactory
-    {
-        public delegate IResourceServer Factory();
-
-        static Factory s_func = () => new DefaultResourceServer();
-
-        public static void Iniialize(Factory func)
-        {
-            s_func = func;
-        }
-
-        public static IResourceServer Create()
-        {
-            return s_func();}
+        #endregion
     }
 }

@@ -138,8 +138,23 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
             ResumeLayout(false);
         }
 
-        public IResourceServer ResourceServer;
-
+        IResourceServer _resourceServer;
+        public IResourceServer ResourceServer
+        {
+            get
+            {
+                if (_resourceServer == null)
+                {
+                    _resourceServer = ResourceServerFactory.Create();
+                }
+                return _resourceServer;
+            }
+            set
+            {
+                if (_resourceServer == value) return;
+                _resourceServer = value;
+            }
+        }
         /// <summary>
         ///   Raised when the BorderStyle property value changes.
         /// </summary>

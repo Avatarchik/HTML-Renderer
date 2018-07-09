@@ -110,7 +110,23 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
 #endif
         }
 
-        public IResourceServer ResourceServer;
+        IResourceServer _resourceServer;
+        public IResourceServer ResourceServer
+        {
+            get
+            {
+                if (_resourceServer == null)
+                {
+                    _resourceServer = ResourceServerFactory.Create();
+                }
+                return _resourceServer;
+            }
+            set
+            {
+                if (_resourceServer == value) return;
+                _resourceServer = value;
+            }
+        }
 
 #if !MONO
         /// <summary>

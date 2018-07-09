@@ -61,7 +61,6 @@ namespace TheArtOfDev.HtmlRenderer.Demo.WinForms
             _htmlPanel.LoadComplete += (sender, args) => _htmlPanel.ScrollToElement("C4");
 
             _htmlToolTip.SetToolTip(_htmlPanel, Resources.Tooltip);
-            _htmlToolTip.ResourceServer = new WinFormsDemoResourceServer();
 
             _htmlEditor.Font = new Font(FontFamily.GenericMonospace, 10);
 
