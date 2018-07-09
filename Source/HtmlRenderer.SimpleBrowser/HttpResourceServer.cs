@@ -21,7 +21,7 @@ namespace HtmlRenderer.SimpleBrowser
             set
             {
                 if (m_url == value) return;
-                m_url =value;
+                m_url = value;
                 // url updated
                 if (m_url.EndsWith("/"))
                 {
@@ -29,32 +29,33 @@ namespace HtmlRenderer.SimpleBrowser
                 }
                 else
                 {
-                    m_baseUrl = Path.GetDirectoryName(m_url);
+                    var splited = m_url.Split('/');
+                    m_baseUrl = string.Join("/", splited.Take(splited.Length-1)) + "/";
                 }
 
                 var uri = new Uri(m_url);
                 var port = "";
-                if(uri.Scheme=="http" && uri.Port != 80)
+                if (uri.Scheme == "http" && uri.Port != 80)
                 {
                     port = ":" + uri.Port;
                 }
-                else  if(uri.Scheme=="https" && uri.Port !=443)
+                else if (uri.Scheme == "https" && uri.Port != 443)
                 {
                     port = ":" + uri.Port;
                 }
                 m_baseUrlWithoutPath = $"{uri.Scheme}://{uri.Host}{port}";
+
+                m_schema = "http:";
+                if (uri.Scheme != "http")
+                {
+                    m_schema = uri.Scheme + ":";
+                }
             }
         }
         string m_baseUrl;
-        string BaseUrl
-        {
-            get { return m_baseUrl; }
-        }
         string m_baseUrlWithoutPath;
-        string BaseUrlWithoutPath
-        {
-            get { return m_baseUrlWithoutPath; }
-        }
+        string m_schema;
+
         public async Task Go(string url)
         {
             var result = await m_session.GetAsync(url);
@@ -71,15 +72,20 @@ namespace HtmlRenderer.SimpleBrowser
                 // external
                 return href;
             }
-            else if(href.StartsWith("/"))
+            else if (href.StartsWith("//"))
             {
                 // absolute path
-                return BaseUrlWithoutPath + href;
+                return m_schema + href;
+            }
+            else if (href.StartsWith("/"))
+            {
+                // absolute path
+                return m_baseUrlWithoutPath + href;
             }
             else
             {
                 // relative path
-                return BaseUrl + href;
+                return m_baseUrl + href;
             }
         }
 
@@ -130,19 +136,35 @@ namespace HtmlRenderer.SimpleBrowser
 
         class HttpTask
         {
+            public string Url;
             public Task<HttpResult> Task;
             public Byte[] Bytes;
 
             HttpTask() { }
 
-            public static HttpTask Create(Task<HttpResult> task, Action callback)
+            public static HttpTask Create(string url, Task<HttpResult> task, Action callback)
             {
-                var httpTask = new HttpTask();
+                Console.WriteLine($"[HttpTask.Create]{url}");
+                var httpTask = new HttpTask
+                {
+                    Url = url
+                };
                 httpTask.Task = task.ContinueWith(x =>
                 {
-                    httpTask.Bytes = x.Result.GetBodyBytes().ToArray();
-                    callback();
-                    return x.Result;
+                    try
+                    {
+                        if (x.IsCompleted)
+                        {
+                            httpTask.Bytes = x.Result.GetBodyBytes();
+                            callback();
+                        }
+                        return x.Result;
+                    }
+                    catch(Exception ex)
+                    {
+                        Console.WriteLine($"{httpTask.Url} {ex}");
+                        throw;
+                    }
                 });
                 return httpTask;
             }
@@ -154,7 +176,7 @@ namespace HtmlRenderer.SimpleBrowser
 
                 if (m_cssData == null)
                 {
-                    var css = Encoding.UTF8.GetString(Task.Result.GetBodyBytes().ToArray());
+                    var css = Encoding.UTF8.GetString(Bytes);
                     m_cssData = CssData.Parse(adapter, css);
                 }
                 return m_cssData;
@@ -207,7 +229,7 @@ namespace HtmlRenderer.SimpleBrowser
 
             // not found. request
             var url = GetUrl(href);
-            var newTask = HttpTask.Create(m_session.GetAsync(url), RaiseUpdated);
+            var newTask = HttpTask.Create(url, m_session.GetAsync(url), RaiseUpdated);
             PushTask(href, newTask);
             return null;
         }
@@ -224,7 +246,7 @@ namespace HtmlRenderer.SimpleBrowser
 
             // not found. request
             var url = GetUrl(href);
-            var newTask = HttpTask.Create(m_session.GetAsync(url), RaiseUpdated);
+            var newTask = HttpTask.Create(url, m_session.GetAsync(url), RaiseUpdated);
             PushTask(href, newTask);
             return null;
         }

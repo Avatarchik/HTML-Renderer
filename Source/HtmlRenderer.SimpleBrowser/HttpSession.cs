@@ -208,24 +208,30 @@ namespace HtmlRenderer.SimpleBrowser
             }
         }
 
-        public IEnumerable<Byte> GetBodyBytes()
+        public Byte[] GetBodyBytes()
         {
-            var buffer = new Byte[1024];
-            using (var data = Response.GetResponseStream())
+            using (var s = Response.GetResponseStream())
             {
-                while(true)
+                var ms = new MemoryStream();
+                s.CopyTo(ms);
+                return ms.ToArray();
+            }
+            /*
+            {
+                while (true)
                 {
                     var readSize = data.Read(buffer, 0, buffer.Length);
                     if (readSize == 0)
                     {
                         break;
                     }
-                    for(int i=0; i<readSize; ++i)
+                    for (int i = 0; i < readSize; ++i)
                     {
                         yield return buffer[i];
                     }
                 }
             }
+            */
         }
 
         public HttpResult(HttpWebRequest request, HttpWebResponse response)
@@ -248,6 +254,7 @@ namespace HtmlRenderer.SimpleBrowser
                     var request = (HttpWebRequest)System.Net.WebRequest.Create(url);
                     request.CookieContainer = session.CookieContainer;
                     request.UserAgent = HttpConst.UserAgent;
+                    request.KeepAlive = false;
                     //((HttpWebRequest)request).UserAgent = ".NET Framework Example Client";
                     var response = (HttpWebResponse)request.GetResponse();
                     tcs.SetResult(new HttpResult(request, response));
