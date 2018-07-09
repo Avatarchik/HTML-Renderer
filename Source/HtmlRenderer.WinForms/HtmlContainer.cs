@@ -257,9 +257,9 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         /// </summary>
         /// <param name="htmlSource">the html to init with, init empty if not given</param>
         /// <param name="baseCssData">optional: the stylesheet to init with, init default if not given</param>
-        public Task SetResourceServerAsync(IResourceServer resourceServer)
+        public void SetResourceServer(IResourceServer resourceServer)
         {
-            return _htmlContainerInt.SetResoureServerAsync(resourceServer);
+            _htmlContainerInt.SetResoureServer(resourceServer);
         }
 
         /// <summary>

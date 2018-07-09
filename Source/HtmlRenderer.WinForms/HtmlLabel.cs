@@ -119,6 +119,7 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         /// </summary>
         public HtmlLabel()
         {
+               
             SuspendLayout();
 
             AutoSize = true;
@@ -138,6 +139,20 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
             ResumeLayout(false);
         }
 
+        private void ResourceServer_Updated(object sender, ResourceServerUpdatedEventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Action callback = () => ResourceServer_Updated(sender, e);
+                Invoke(callback);
+                return;
+            }
+
+            _htmlContainer.SetResourceServer(ResourceServer);
+            PerformLayout();
+            Invalidate();
+        }
+
         IResourceServer _resourceServer;
         public IResourceServer ResourceServer
         {
@@ -153,6 +168,7 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
             {
                 if (_resourceServer == value) return;
                 _resourceServer = value;
+                _resourceServer.Updated += ResourceServer_Updated;
             }
         }
         /// <summary>
@@ -309,8 +325,7 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
             {
                 _baseRawCssData = value;
                 _baseCssData = HtmlRender.ParseStyleSheet(value);
-                ResourceServer.SetCssData(_baseCssData);
-                _htmlContainer.SetResourceServerAsync(ResourceServer);
+                ResourceServer.CssData=_baseCssData;
             }
         }
 
@@ -403,10 +418,7 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
                 base.Text = value;
                 if (!IsDisposed)
                 {
-                    ResourceServer.SetHtml(_text);
-                    _htmlContainer.SetResourceServerAsync(ResourceServer);
-                    PerformLayout();
-                    Invalidate();
+                    ResourceServer.Html=_text;
                 }
             }
         }

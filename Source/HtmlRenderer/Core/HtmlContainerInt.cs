@@ -439,18 +439,16 @@ namespace TheArtOfDev.HtmlRenderer.Core
             set { _selectionBackColor = value; }
         }
 
-        public async Task SetResoureServerAsync(IResourceServer resourceServer)
+        public void SetResoureServer(IResourceServer resourceServer)
         {
             Clear();
             _resourceServer = resourceServer;
 
-            var htmlSource = await resourceServer.GetHtmlAsync();
-
-            if (!string.IsNullOrEmpty(htmlSource))
+            if (!string.IsNullOrEmpty(resourceServer.Html))
             {
                 _loadComplete = false;
 
-                var baseCssData = await resourceServer.GetCssDataAsync();
+                var baseCssData = resourceServer.CssData;
                 _cssData = baseCssData ?? _adapter.DefaultCssData;
 
                 DomParser parser = new DomParser(_cssParser);
@@ -458,7 +456,7 @@ namespace TheArtOfDev.HtmlRenderer.Core
                 {
                     cssData = _cssData
                 };
-                _root = await parser.GenerateCssTree(htmlSource, this, cssData);
+                _root = parser.GenerateCssTree(resourceServer.Html, this, cssData);
                 if (cssData.cssDataChanged)
                 {
                     _cssData = cssData.cssData;

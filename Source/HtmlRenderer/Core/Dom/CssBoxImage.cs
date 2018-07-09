@@ -137,17 +137,21 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
             CssLayoutEngine.MeasureImageSize(_imageWord);
         }
 
-        async Task LoadImageAsync()
+        void LoadImageAsync()
         {
             RImage image;
             if (this.Content != null && this.Content != CssConstants.Normal)
-                image = await HtmlContainer.ResourceServer.GetImageAsync(
-                    this.Content, 
+            {
+                image = HtmlContainer.ResourceServer.GetImage(
+                    this.Content,
                     HtmlTag != null ? HtmlTag.Attributes : null);
+            }
             else
-                image = await HtmlContainer.ResourceServer.GetImageAsync(
-                    GetAttribute("src"), 
+            {
+                image = HtmlContainer.ResourceServer.GetImage(
+                    GetAttribute("src"),
                     HtmlTag != null ? HtmlTag.Attributes : null);
+            }
 
             _imageWord.Image = image;
             _imageWord.ImageRectangle = RRect.Empty; // rectangle;

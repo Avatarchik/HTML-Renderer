@@ -248,9 +248,9 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
         {
             //Create fragment container
             var cssClass = string.IsNullOrEmpty(_tooltipCssClass) ? null : string.Format(" class=\"{0}\"", _tooltipCssClass);
-            ResourceServer.SetHtml(string.Format("<div{0}>{1}</div>", cssClass, GetToolTip(e.AssociatedControl)));
+            ResourceServer.Html=string.Format("<div{0}>{1}</div>", cssClass, GetToolTip(e.AssociatedControl));
             
-            _htmlContainer.SetResourceServerAsync(ResourceServer);
+            _htmlContainer.SetResourceServer(ResourceServer);
             _htmlContainer.MaxSize = MaximumSize;
 
             //Measure size of the container

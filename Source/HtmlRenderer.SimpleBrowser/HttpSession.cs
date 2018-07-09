@@ -324,7 +324,7 @@ namespace HtmlRenderer.SimpleBrowser
             m_cc.Add(cookie);
         }
 
-        public Task<HttpResult> Get(string url)
+        public Task<HttpResult> GetAsync(string url)
         {
             return Http.Get(this, url);
         }

@@ -21,8 +21,7 @@ namespace HtmlRenderer.SimpleBrowser
         {
             Console.WriteLine($"go {url.Text}");
             await m_server.Go(url.Text);
-            //htmlPanel1.Invalidate();
-            htmlPanel1.Text = await m_server.GetHtmlAsync();
+            htmlPanel1.Text = m_server.Html;
         }
     }
 }

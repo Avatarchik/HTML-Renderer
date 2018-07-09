@@ -690,7 +690,7 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
 
             CreateListItemBox(g);
 
-            if (!IsFixed)
+            if (!IsFixed && HtmlContainer.Root!=null)
             {
                 var actualWidth = Math.Max(GetMinimumWidth() + GetWidthMarginDeep(this), Size.Width < 90999 ? ActualRight - HtmlContainer.Root.Location.X : 0);
                 HtmlContainer.ActualSize = CommonUtils.Max(HtmlContainer.ActualSize, new RSize(actualWidth, ActualBottom - HtmlContainer.Root.Location.Y));
@@ -721,13 +721,13 @@ namespace TheArtOfDev.HtmlRenderer.Core.Dom
             }
         }
 
-        async Task LoadBackgroundImageAsync()
+        void LoadBackgroundImageAsync()
         {
             if (BackgroundImage != CssConstants.None)
             {
-                var backgroundImage = await HtmlContainer.ResourceServer.GetImageAsync(
-                    BackgroundImage, HtmlTag != null ? HtmlTag.Attributes : null);
-
+                var backgroundImage = HtmlContainer.ResourceServer.GetImage(
+                    BackgroundImage,
+                    HtmlTag != null ? HtmlTag.Attributes : null);
                 if (backgroundImage != null)
                 {
                     _backgroundImage = backgroundImage;

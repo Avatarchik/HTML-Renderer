@@ -238,7 +238,7 @@ namespace TheArtOfDev.HtmlRenderer.PdfSharp
         /// <param name="baseCssData">optional: the stylesheet to init with, init default if not given</param>
         public Task SetResourceServerAsync(IResourceServer resourceServer)
         {
-            return _htmlContainerInt.SetResoureServerAsync(resourceServer);
+            return _htmlContainerInt.SetResoureServer(resourceServer);
         }
 
         /// <summary>

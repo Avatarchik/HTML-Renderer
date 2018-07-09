@@ -119,6 +119,7 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
             {
                 if (_resourceServer == value) return;
                 _resourceServer = value;
+                _resourceServer.Updated += ResourceServer_Updated;
             }
         }
         #endregion
@@ -141,6 +142,21 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
             _htmlContainer.RenderError += OnRenderError;
             _htmlContainer.Refresh += OnRefresh;
             _htmlContainer.ScrollChange += OnScrollChange;
+        }
+
+        private void ResourceServer_Updated(object sender, ResourceServerUpdatedEventArgs e)
+        {
+            if (InvokeRequired)
+            {
+                Action callback = () => ResourceServer_Updated(sender, e);
+                Invoke(callback);
+                return;
+            }
+
+            _htmlContainer.SetResourceServer(ResourceServer);
+            PerformLayout();
+            Invalidate();
+            InvokeMouseMove();
         }
 
         /// <summary>
@@ -291,8 +307,7 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
             {
                 _baseRawCssData = value;
                 _baseCssData = HtmlRender.ParseStyleSheet(value);
-                ResourceServer.SetCssData(_baseCssData);
-                _htmlContainer.SetResourceServerAsync(ResourceServer);
+                ResourceServer.CssData = _baseCssData;
             }
         }
 
@@ -317,16 +332,13 @@ namespace TheArtOfDev.HtmlRenderer.WinForms
             get { return _text; }
             set
             {
+                if (_text == value) return;
                 _text = value;
-                base.Text = value;
+
                 if (!IsDisposed)
                 {
                     VerticalScroll.Value = VerticalScroll.Minimum;
-                    ResourceServer.SetHtml(_text);
-                    _htmlContainer.SetResourceServerAsync(ResourceServer);
-                    PerformLayout();
-                    Invalidate();
-                    InvokeMouseMove();
+                    ResourceServer.Html=_text;
                 }
             }
         }
