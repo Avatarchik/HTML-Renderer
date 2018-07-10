@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using TheArtOfDev.HtmlRenderer.Adapters;
@@ -56,8 +57,9 @@ namespace HtmlRenderer.SimpleBrowser
         string m_baseUrlWithoutPath;
         string m_schema;
 
-        public async Task Go(string url)
+        public async Task Go(string href)
         {
+            var url = GetUrl(href);
             var result = await m_session.GetAsync(url);
             var bytes = result.GetBodyBytes();
             Url = url;
@@ -139,6 +141,7 @@ namespace HtmlRenderer.SimpleBrowser
             public string Url;
             public Task<HttpResult> Task;
             public Byte[] Bytes;
+            public Exception Error;
 
             HttpTask() { }
 
@@ -157,14 +160,15 @@ namespace HtmlRenderer.SimpleBrowser
                         {
                             httpTask.Bytes = x.Result.GetBodyBytes();
                             callback();
+                            return x.Result;
                         }
-                        return x.Result;
                     }
                     catch(Exception ex)
                     {
+                        httpTask.Error = ex;
                         Console.WriteLine($"{httpTask.Url} {ex}");
-                        throw;
                     }
+                    return default(HttpResult);
                 });
                 return httpTask;
             }
