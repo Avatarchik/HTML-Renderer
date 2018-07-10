@@ -210,6 +210,11 @@ namespace HtmlRenderer.SimpleBrowser
 
         public Byte[] GetBodyBytes()
         {
+            if (Response.StatusCode!=HttpStatusCode.OK)
+            {
+                return null;
+            }
+
             using (var s = Response.GetResponseStream())
             {
                 var ms = new MemoryStream();
@@ -249,14 +254,20 @@ namespace HtmlRenderer.SimpleBrowser
 
             ThreadPool.QueueUserWorkItem(_ =>
             {
+                HttpWebRequest request = null;
                 try
                 {
-                    var request = (HttpWebRequest)System.Net.WebRequest.Create(url);
+                    request = (HttpWebRequest)System.Net.WebRequest.Create(url);
                     request.CookieContainer = session.CookieContainer;
                     request.UserAgent = HttpConst.UserAgent;
                     request.KeepAlive = false;
                     //((HttpWebRequest)request).UserAgent = ".NET Framework Example Client";
                     var response = (HttpWebResponse)request.GetResponse();
+                    tcs.SetResult(new HttpResult(request, response));
+                }
+                catch (WebException ex)
+                {
+                    var response = (HttpWebResponse)ex.Response;
                     tcs.SetResult(new HttpResult(request, response));
                 }
                 catch (Exception ex)
