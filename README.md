@@ -1,6 +1,9 @@
 HTML Renderer [![Build status](https://ci.appveyor.com/api/projects/status/cm8xpf8ebt3hyi3e)](https://ci.appveyor.com/project/ArthurHub/html-renderer)
 =============
 
+## This repository is modified version.
+* [CUSTOM](CUSTOM.md)
+
 ## Help Wanted
 * Looking for a contributor(s) to take this project forward as I'm unable to continue supporting it.
 * Contribute directly to the repository and update nuget packages.
